@@ -24,7 +24,7 @@ Targets:
   prepare          Starts containers. Pass services and/or consumers args to include them.
   prepare-local    Starts base application locally.
   stop             Stops containers. Pass services and/or consumers args to include them.
-  validate-docker-compose  Validates containers' config. Pass services and/or consumers args to include them.
+  validate-docker-compose  Validates containers config. Pass services and/or consumers args to include them.
   security-code-analysis  Executes security code analysis.
   static-code-analysis  Executes static code analysis.
   unit-tests       Executes unit tests.

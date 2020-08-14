@@ -87,7 +87,7 @@ stop: ## Stops containers. Pass services and/or consumers args to include them.
     fi
 
 .PHONY: validate-docker-compose
-validate-docker-compose: ## Validates containers' config. Pass services and/or consumers args to include them.
+validate-docker-compose: ## Validates containers config. Pass services and/or consumers args to include them.
 	@if [ $(services) = "1" ]; then\
 		echo "Validating services containers..." && \
 		$(DOCKER_COMPOSE_SERVICES) config;\
