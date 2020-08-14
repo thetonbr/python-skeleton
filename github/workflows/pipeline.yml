@@ -1,0 +1,105 @@
+name: CI / CD
+
+on: [push, pull_request]
+
+jobs:
+  CI:
+    timeout-minutes: 15
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: install Docker Compose
+        run: pip install docker-compose
+
+      - name: build
+        timeout-minutes: 4
+        run: |
+          docker login docker.pkg.github.com --username "${{github.actor}}" --password "${{github.token}}"
+          make build
+
+      - name: deps
+        timeout-minutes: 2
+        run: make deps
+
+      - name: prepare
+        timeout-minutes: 2
+        run: make prepare
+
+      - name: validate-docker-compose
+        timeout-minutes: 1
+        run: make validate-docker-compose
+
+      - name: security-code-analysis
+        timeout-minutes: 1
+        run: make security-code-analysis
+
+      - name: static-code-analysis
+        timeout-minutes: 1
+        run: make static-code-analysis
+
+      - name: unit-tests
+        timeout-minutes: 1
+        run: make unit-tests
+
+      - name: functional-tests
+        timeout-minutes: 1
+        run: make functional-tests
+
+      - name: integration-tests
+        timeout-minutes: 1
+        run: make integration-tests
+
+      - name: clean
+        timeout-minutes: 1
+        run: |
+          make clean
+          docker logout docker.pkg.github.com
+
+  CD:
+    needs: [CI]
+    if: github.ref == 'refs/heads/master'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: install Docker Compose
+        run: pip install docker-compose
+
+      - name: version
+        id: version
+        run: |
+          echo ::set-output name=version::$(git rev-parse --short=7 ${{ github.sha }})
+
+      - name: build
+        env: 
+          VERSION: ${{ steps.version.outputs.version }}
+        timeout-minutes: 6
+        run: |
+          docker login docker.pkg.github.com --username "${{github.actor}}" --password "${{github.token}}"
+          make build-deploy
+
+      - name: deps
+        env: 
+          VERSION: ${{ steps.version.outputs.version }}
+        timeout-minutes: 4
+        run: make deps-deploy
+
+      - name: deploy
+        env: 
+          VERSION: ${{ steps.version.outputs.version }}
+        timeout-minutes: 4
+        run: make deploy
+
+      - name: clean
+        timeout-minutes: 1
+        run: |
+          make clean
+          docker logout docker.pkg.github.com

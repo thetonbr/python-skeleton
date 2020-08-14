@@ -1,0 +1,13 @@
+# External
+.DS_Store/
+.idea/
+.vscode/
+*.iml
+
+# Internal
+.local.env
+.mypy_cache/
+.venv/
+__pycache__/
+*.pyc
+*.pyo

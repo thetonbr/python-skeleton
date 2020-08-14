@@ -1,0 +1,13 @@
+version: "3.8"
+
+x-consumer-config:
+  &consumer-config
+  build:
+    target: development
+  volumes:
+    - .:/app
+
+services:
+  skeleton_cli_consumer_on_internal_user_deleted:
+    <<: *consumer-config
+

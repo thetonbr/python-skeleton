@@ -1,0 +1,43 @@
+version: "3.8"
+
+x-env-vars:
+  &env-vars
+  TZ: "${TZ}"
+
+  MONGODB_ROOT_USERNAME: "${MONGODB_ROOT_USERNAME}"
+  MONGODB_USERNAME: "${MONGODB_USERNAME}"
+  MONGODB_ROOT_PASSWORD: "${MONGODB_ROOT_PASSWORD}"
+  MONGODB_PASSWORD: "${MONGODB_PASSWORD}"
+  MONGODB_HOST: "${MONGODB_HOST}"
+  MONGODB_PORT: "${MONGODB_PORT}"
+  MONGODB_ROOT_DATABASE: "${MONGODB_ROOT_DATABASE}"
+
+  RABBITMQ_ROOT_USER: "${RABBITMQ_ROOT_USER}"
+  RABBITMQ_USER: "${RABBITMQ_USER}"
+  RABBITMQ_ROOT_PASSWORD: "${RABBITMQ_ROOT_PASSWORD}"
+  RABBITMQ_PASSWORD: "${RABBITMQ_PASSWORD}"
+  RABBITMQ_HOST: "${RABBITMQ_HOST}"
+  RABBITMQ_PORT: "${RABBITMQ_PORT}"
+  RABBITMQ_UI_PORT: "${RABBITMQ_UI_PORT}"
+  RABBITMQ_ROOT_VHOST: "${RABBITMQ_ROOT_VHOST}"
+  RABBITMQ_ERLANG_COOKIE: "${RABBITMQ_ERLANG_COOKIE}"
+
+  HTTP_PORT: 80
+
+networks:
+  example:
+    external: true
+
+services:
+  service_configurator_http:
+    container_name: service_configurator_http
+    build:
+      context: .
+      dockerfile: docker/python/Dockerfile
+      target: production
+    environment:
+      <<: *env-vars
+    restart: "no"
+    command: "src/apps/configurator_cli/__main__.py"
+    networks:
+      - example

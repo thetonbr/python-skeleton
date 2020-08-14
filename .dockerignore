@@ -1,0 +1,18 @@
+# External
+.DS_Store/
+.github/
+.idea/
+.vscode/
+*.iml
+dist
+
+# Internal
+.gitignore
+.local.env
+ci.sh
+docker-compose.consumers.override.yml
+docker-compose.consumers.yml
+docker-compose.override.yml
+docker-compose.yml
+Makefile
+README.md

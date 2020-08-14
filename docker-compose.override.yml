@@ -1,0 +1,16 @@
+version: "3.8"
+
+x-env-vars:
+  &env-vars
+  SERVICE_CONFIGURATOR_HOST: "${SERVICE_CONFIGURATOR_HOST}"
+
+services:
+  app_http:
+    build:
+      target: development
+    volumes:
+      - .:/app
+    ports:
+      - 80:80
+    environment:
+      <<: *env-vars
