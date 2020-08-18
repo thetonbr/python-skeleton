@@ -71,7 +71,7 @@ prepare: ## Starts containers. Pass services and/or consumers args to include th
 .PHONY: prepare-local
 prepare-local: ## Starts base application locally.
 	@echo "Starting local base..." && \
-	adev runserver $(shell grep -v '^#' ".local.env" | xargs) LIVE_RELOAD=1 "$(pwd)/src/apps/app_http/__main__.py"
+	$(shell grep -v '^#' ".local.env" | xargs) LIVE_RELOAD=1 adev runserver "$(shell pwd)/src/apps/app_http/__main__.py"
 
 .PHONY: stop
 stop: ## Stops containers. Pass services and/or consumers args to include them.
