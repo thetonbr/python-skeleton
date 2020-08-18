@@ -79,27 +79,21 @@ jobs:
           echo ::set-output name=version::$(git rev-parse --short=7 ${{ github.sha }})
 
       - name: build
-        env: 
+        env:
           VERSION: ${{ steps.version.outputs.version }}
         timeout-minutes: 6
         run: |
           docker login docker.pkg.github.com --username "${{github.actor}}" --password "${{github.token}}"
-          make build-deploy
-
-      - name: deps
-        env: 
-          VERSION: ${{ steps.version.outputs.version }}
-        timeout-minutes: 4
-        run: make deps-deploy
+          DOCKER_COMPOSE=docker-compose -f docker-compose.yml make build
 
       - name: deploy
-        env: 
+        env:
           VERSION: ${{ steps.version.outputs.version }}
         timeout-minutes: 4
-        run: make deploy
+        run: DOCKER_COMPOSE=docker-compose -f docker-compose.yml make deploy
 
       - name: clean
         timeout-minutes: 1
         run: |
-          make clean
+          DOCKER_COMPOSE=docker-compose -f docker-compose.yml make clean
           docker logout docker.pkg.github.com
