@@ -16,7 +16,7 @@ def build_commander(container: Container) -> Application:
     return Application([
         Command(
             name='skeleton:account:consumer-on-internal-user-deleted',
-            handler=container.cli_app_consumer_on_internal_user_deleted_controller,
+            handler=container.account.cli_app_consumer_on_internal_user_deleted_controller,
             optionals=_optionals,
             positionals=_positionals
         )

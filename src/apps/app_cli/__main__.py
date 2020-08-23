@@ -29,8 +29,8 @@ class CliApp(AsyncApplication[Container, Application]):
             traceback: Optional[TracebackType]
     ) -> None:
         if self._container:
-            await self._container.amqp_connection.close()
-            self._container.mongodb_connection.close()
+            await self._container.shared.amqp_connection.close()
+            self._container.shared.mongodb_connection.close()
 
     def __call__(self) -> None:
         run_app(self.__aenter__(), loop=self.loop)

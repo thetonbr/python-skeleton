@@ -15,7 +15,7 @@ class UserContext:
     @async_run_until_complete(loop=TEST_LOOP)
     async def an_existent_user_with_id(ctx: Context, user_id: str) -> None:
         user_id = UserIdMother.create(user_id).value()
-        await ctx.container.command_bus.dispatch(RegisterUserCommand(
+        await ctx.container.shared.command_bus.dispatch(RegisterUserCommand(
             user_id,
             UserEmailMother.random().value(),
             'secret123456'
@@ -29,7 +29,7 @@ class UserContext:
         user_id = (UserIdMother.create(cmd['id']) if 'id' in cmd else UserIdMother.random()).value()
         plain_password = cmd['password'] if 'password' in cmd else 'secret123456'
         UserPasswordMother.create(plain_password, hashed=False).check(plain_password)
-        await ctx.container.command_bus.dispatch(RegisterUserCommand(
+        await ctx.container.shared.command_bus.dispatch(RegisterUserCommand(
             user_id,
             (UserEmailMother.create(cmd['email']) if 'email' in cmd else UserEmailMother.random()).value(),
             plain_password
@@ -39,7 +39,7 @@ class UserContext:
     @step('an authenticated user with email "{email}" and password "{password}"')
     @async_run_until_complete(loop=TEST_LOOP)
     async def an_authenticated_user_with_email_and_password(ctx: Context, email: str, password: str) -> None:
-        ctx.token = (await ctx.container.token_generator_service(UserEmailMother.create(email), password))['token']
+        ctx.token = (await ctx.container.account.token_generator_service(UserEmailMother.create(email), password))['token']
 
     @staticmethod
     @step('an existent authenticated user with id "{user_id}"')
@@ -48,12 +48,12 @@ class UserContext:
         cmd = {'id': user_id}
         email = UserEmailMother.create(cmd['email']) if 'email' in cmd else UserEmailMother.random()
         plain_password = cmd['password'] if 'password' in cmd else 'secret123456'
-        await ctx.container.command_bus.dispatch(RegisterUserCommand(
+        await ctx.container.shared.command_bus.dispatch(RegisterUserCommand(
             user_id,
             email.value(),
             plain_password
         ))
-        ctx.token = (await ctx.container.token_generator_service(email, plain_password))['token']
+        ctx.token = (await ctx.container.account.token_generator_service(email, plain_password))['token']
 
     @staticmethod
     @step('an existent authenticated user with')
@@ -63,9 +63,9 @@ class UserContext:
         email = UserEmailMother.create(cmd['email']) if 'email' in cmd else UserEmailMother.random()
         plain_password = cmd['password'] if 'password' in cmd else 'secret123456'
         UserPasswordMother.create(plain_password, hashed=False).check(plain_password)
-        await ctx.container.command_bus.dispatch(RegisterUserCommand(
+        await ctx.container.shared.command_bus.dispatch(RegisterUserCommand(
             (UserIdMother.create(cmd['id']) if 'id' in cmd else UserIdMother.random()).value(),
             email.value(),
             plain_password
         ))
-        ctx.token = (await ctx.container.token_generator_service(email, plain_password))['token']
+        ctx.token = (await ctx.container.account.token_generator_service(email, plain_password))['token']

@@ -2,15 +2,29 @@ version: "3.8"
 
 x-env-vars:
   &env-vars
-  SERVICE_CONFIGURATOR_HOST: "${SERVICE_CONFIGURATOR_HOST}"
+  ENVIRONMENT: "${ENVIRONMENT:-development}"
+
+x-services-config:
+  &services-config
+  volumes:
+    - .:/app
+  restart: unless-stopped
+  environment:
+    <<: *env-vars
+  networks:
+    - example
 
 services:
-  app_http:
+  cnf:
+    <<: *services-config
     build:
-      target: development
-    volumes:
-      - .:/app
+      target: cnf_http_development
     ports:
-      - 80:80
-    environment:
-      <<: *env-vars
+      - "${CNF_PORT}:${CNF_PORT}"
+
+  app:
+    <<: *services-config
+    build:
+      target: app_http_development
+    ports:
+      - "${APP_PORT}:${APP_PORT}"

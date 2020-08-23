@@ -14,5 +14,5 @@ Feature: ConsumerOnInternalUserDeletedController
       }
     }
     """
-    Then I execute the "skeleton:account:consumer-on-internal-user-deleted --times=1" command for "1" seconds
+    Then I execute the "skeleton:account:consumer-on-internal-user-deleted --times=1 --stop" command for "1" seconds
     And the exit code should be "0"

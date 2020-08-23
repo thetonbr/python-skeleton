@@ -2,18 +2,17 @@ from typing import List, final
 
 from aioddd import EventPublisher, Event
 
-from src.libs.shared.infrastructure.amqp_event_publisher import AMQPEventPublisher
-from src.libs.shared.infrastructure.mongodb_event_publisher import MongoDBEventPublisher
-
 
 @final
 class EventPublisherDecorator(EventPublisher):
-    __slots__ = ('_amqp', '_mongodb')
+    _publishers: List[EventPublisher]
 
-    def __init__(self, amqp: AMQPEventPublisher, mongodb: MongoDBEventPublisher) -> None:
-        self._amqp = amqp
-        self._mongodb = mongodb
+    def __init__(self, publishers: List[EventPublisher]) -> None:
+        self._publishers = publishers
+
+    def add_publisher(self, publisher: EventPublisher) -> None:
+        self._publishers.append(publisher)
 
     async def publish(self, events: List[Event]) -> None:
-        await self._mongodb.publish(events)
-        await self._amqp.publish(events)
+        for publisher in self._publishers:
+            await publisher.publish(events)

@@ -1,4 +1,4 @@
-## python-skeleton
+## example
 
 ### Requirements
 
@@ -15,24 +15,25 @@
 
 ```shell
 Usage:
-  make <target> [services=0] [consumers=0]
+  make <target> [local=0] [deploy=0] [services=1] [consumers=0]
 
 Targets:
-  build            Builds container images. Pass services and/or consumers args to include them.
-  deps             Installs container dependencies. Pass services args to include it.
-  deps-local       Installs base application dependencies locally.
-  prepare          Starts containers. Pass services and/or consumers args to include them.
-  prepare-local    Starts base application locally.
-  stop             Stops containers. Pass services and/or consumers args to include them.
-  validate-docker-compose  Validates containers config. Pass services and/or consumers args to include them.
-  security-code-analysis  Executes security code analysis.
-  static-code-analysis  Executes static code analysis.
-  unit-tests       Executes unit tests.
-  integration-tests  Executes integration tests.
-  functional-tests  Executes functional tests.
-  functional-wip-tests  Executes functional wip tests.
-  deploy           Deploy containers including consumers and excluding services.
-  clean            Clean containers. Pass services and/or consumers args to include them.
+  build                     Builds env files, networks, volumes and container images.
+  deps                      Installs container dependencies.
+  deps-local                Installs application dependencies locally.
+  prepare                   Starts containers.
+  prepare-services          Starts services containers.
+  prepare-local             Starts application process locally.
+  stop                      Stops containers.
+  validate-docker-compose   Validates containers config.
+  security-code-analysis    Executes security code analysis.
+  static-code-analysis      Executes static code analysis.
+  unit-tests                Executes unit tests.
+  integration-tests         Executes integration tests.
+  functional-tests          Executes functional tests.
+  functional-wip-tests      Executes functional wip tests.
+  deploy                    Deploy images.
+  clean                     Cleans containers, volumes and networks.
 ```
 
 ### Recommendations
@@ -54,11 +55,12 @@ Targets:
 - See [./tests/.pylintrc](https://docs.pylint.org/)
 - See [./tests/mypy.ini](https://mypy.readthedocs.io/)
 - See [./tests/.bandit](https://bandit.readthedocs.io)
+- See [./tests/licenses.ini](https://github.com/dhatim/python-license-check)
 
 #### Standards
 
 - See [JSON:API 1.0](https://jsonapi.org/format)
-> Example
+> example
 ```sh
 GET /<resource>/<id> HTTP/1.1
 Accept: application/json

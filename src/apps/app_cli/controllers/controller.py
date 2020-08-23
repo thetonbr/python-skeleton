@@ -1,3 +1,4 @@
+import traceback
 from abc import ABC, abstractmethod
 from logging import Logger
 from traceback import print_tb
@@ -36,21 +37,20 @@ class BaseConsumerController(ABC, BaseController):
         self._stop = False
 
     async def __call__(self, args: Dict[str, Any]) -> int:
-        self._logger.info({'message': f'Consuming {self._queue_name}…'})
+        self._logger.info({'message': f'Consuming {self._queue_name}...'})
         try:
-            self._retries = int(args.get('retries', self._retries))
+            self._retries = int(self._retries if args.get('retries') is None else args.get('retries'))
             self._stop = bool(args.get('stop', self._stop))
             await self._consumer.consume(self._queue_name, int(args.get('times', 0)), self._callback)
-            self._logger.info('consumed')
         except (ChannelAccessRefused, ChannelNotFoundEntity, ChannelLockedResource) as err:
-            self._logger.info({'message': f'AMQP Channel not available error {type(err)}: {str(err)}'})
+            self._logger.info({'message': f'AMQP Channel not available error {str(type(err))}: {str(err)}'})
             print_tb(err.__traceback__)
             self._logger.info({'message': f'Total processed: {self._processed}'})
             self._logger.info({'message': f'Total consumed: {self._consumed}'})
             return 1
         except Exception as err:
-            self._logger.info({'message': f'Unhandled error {type(err)}: {str(err)}'})
-            print_tb(err.__traceback__)
+            self._logger.info(traceback.format_exc())
+            self._logger.info({'message': f'Unhandled error {str(type(err))}: {str(err)}'})
             self._logger.info({'message': f'Total processed: {self._processed}'})
             self._logger.info({'message': f'Total consumed: {self._consumed}'})
         return int(self._consumed != self._processed)

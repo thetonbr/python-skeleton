@@ -1,4 +1,4 @@
-FROM python:3.8.5 AS production
+FROM python:3.8.5 as production
 
 WORKDIR /app
 
@@ -23,6 +23,18 @@ RUN /install.sh
 ENTRYPOINT ["python"]
 CMD []
 
+FROM production as cnf_cli_production
+
+CMD ["src/apps/cnf_cli/__main__.py"]
+
+FROM production as app_http_production
+
+CMD ["src/apps/app_http/__main__.py"]
+
+FROM production as app_cli_production
+
+CMD ["src/apps/app_cli/__main__.py"]
+
 FROM production as development
 
 ENV ENVIRONMENT=development DEBUG=1
@@ -32,3 +44,15 @@ COPY ./docker/python/rootfs-dev /
 COPY tests /app/tests
 
 RUN /install.sh
+
+FROM development as cnf_http_development
+
+CMD ["src/apps/cnf_http/__main__.py"]
+
+FROM development as app_http_development
+
+CMD ["src/apps/app_http/__main__.py"]
+
+FROM development as app_cli_development
+
+CMD ["src/apps/app_cli/__main__.py"]

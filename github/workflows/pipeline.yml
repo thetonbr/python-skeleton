@@ -19,81 +19,81 @@ jobs:
         timeout-minutes: 4
         run: |
           docker login docker.pkg.github.com --username "${{github.actor}}" --password "${{github.token}}"
-          make build
+          make build local=0 deploy=0 services=1 consumers=0
 
       - name: deps
         timeout-minutes: 2
-        run: make deps
+        run: make deps local=0 deploy=0 services=0 consumers=0
 
       - name: prepare
         timeout-minutes: 2
-        run: make prepare
+        run: make prepare local=0 deploy=0 services=1 consumers=0
 
       - name: validate-docker-compose
         timeout-minutes: 1
-        run: make validate-docker-compose
+        run: make validate-docker-compose local=0 deploy=0 services=1 consumers=1
 
       - name: security-code-analysis
         timeout-minutes: 1
-        run: make security-code-analysis
+        run: make security-code-analysis local=0 deploy=0 services=0 consumers=0
 
       - name: static-code-analysis
         timeout-minutes: 1
-        run: make static-code-analysis
+        run: make static-code-analysis local=0 deploy=0 services=0 consumers=0
 
       - name: unit-tests
         timeout-minutes: 1
-        run: make unit-tests
+        run: make unit-tests local=0 deploy=0 services=0 consumers=0
 
       - name: functional-tests
         timeout-minutes: 1
-        run: make functional-tests
+        run: make functional-tests local=0 deploy=0 services=0 consumers=0
 
       - name: integration-tests
         timeout-minutes: 1
-        run: make integration-tests
+        run: make integration-tests local=0 deploy=0 services=0 consumers=0
 
       - name: clean
         timeout-minutes: 1
         run: |
-          make clean
+          make clean local=0 deploy=0 services=1 consumers=1
           docker logout docker.pkg.github.com
 
-  CD:
-    needs: [CI]
-    if: github.ref == 'refs/heads/master'
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: install Docker Compose
-        run: pip install docker-compose
-
-      - name: version
-        id: version
-        run: |
-          echo ::set-output name=version::$(git rev-parse --short=7 ${{ github.sha }})
-
-      - name: build
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        timeout-minutes: 6
-        run: |
-          docker login docker.pkg.github.com --username "${{github.actor}}" --password "${{github.token}}"
-          DOCKER_COMPOSE=docker-compose -f docker-compose.yml make build
-
-      - name: deploy
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        timeout-minutes: 4
-        run: DOCKER_COMPOSE=docker-compose -f docker-compose.yml make deploy
-
-      - name: clean
-        timeout-minutes: 1
-        run: |
-          DOCKER_COMPOSE=docker-compose -f docker-compose.yml make clean
-          docker logout docker.pkg.github.com
+#  CD:
+#    needs: [CI]
+#    if: github.ref == 'refs/heads/master'
+#    runs-on: ${{ matrix.os }}
+#    strategy:
+#      matrix:
+#        os: [ubuntu-latest]
+#    timeout-minutes: 15
+#    steps:
+#      - uses: actions/checkout@v2
+#
+#      - name: install Docker Compose
+#        run: pip install docker-compose
+#
+#      - name: version
+#        id: version
+#        run: |
+#          echo ::set-output name=version::$(git rev-parse --short=7 ${{ github.sha }})
+#
+#      - name: build
+#        env:
+#          VERSION: ${{ steps.version.outputs.version }}
+#        timeout-minutes: 6
+#        run: |
+#          docker login docker.pkg.github.com --username "${{github.actor}}" --password "${{github.token}}"
+#          make build local=0 deploy=1 services=0 consumers=1
+#
+#      - name: deploy
+#        env:
+#          VERSION: ${{ steps.version.outputs.version }}
+#        timeout-minutes: 4
+#        run: make deploy local=0 deploy=1 services=0 consumers=1
+#
+#      - name: clean
+#        timeout-minutes: 1
+#        run: |
+#          make clean local=0 deploy=1 services=0 consumers=1
+#          docker logout docker.pkg.github.com

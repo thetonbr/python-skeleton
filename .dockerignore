@@ -13,6 +13,7 @@ ci.sh
 docker-compose.consumers.override.yml
 docker-compose.consumers.yml
 docker-compose.override.yml
+docker-compose.services.yml
 docker-compose.yml
 Makefile
 README.md

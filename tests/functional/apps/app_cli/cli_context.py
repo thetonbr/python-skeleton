@@ -53,9 +53,9 @@ class ContextCLI:
     @async_run_until_complete(loop=TEST_LOOP)
     async def an_existent_published_event_with(ctx: Context) -> None:
         body = loads(ctx.text)
-        mapper = find_event_mapper_by_name(body['meta']['message'], ctx.container.config_event_mappers.all())
+        mapper = find_event_mapper_by_name(body['meta']['message'], ctx.container.shared.config_event_mappers.all())
         event = mapper.decode(body['attributes'])
-        await ctx.container.event_publisher.publish([event])
+        await ctx.container.shared.event_publisher.publish([event])
 
 
 @async_run_until_complete(loop=TEST_LOOP)
