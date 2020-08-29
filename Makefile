@@ -9,13 +9,14 @@ consumers?=0
 
 DEBUG?=0
 WORKDIR?=/app
+
 CNF_CLI_DIR=cnf_cli
 CNF_HTTP_DIR=cnf_http
+DEFAULT_CNF_CONTAINER?=cnf
+
 APP_CLI_DIR=app_cli
 APP_HTTP_DIR=app_http
-
 DEFAULT_APP_CONTAINER?=app
-DEFAULT_CNF_CONTAINER?=cnf
 
 DOCKER_COMPOSE:=docker-compose -f docker-compose.yml
 
@@ -37,7 +38,7 @@ endif
 
 .PHONY: help
 help:
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target> [local=0] [deploy=0] [services=1] [consumers=0]\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target> [local=$(local)] [deploy=$(deploy)] [services=$(services)] [consumers=$(consumers)]\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 .PHONY: build
 build: ## Builds env files, networks, volumes and container images.
@@ -76,7 +77,7 @@ prepare-services: ## Starts services containers.
 	$(call run_command,$(DEFAULT_CNF_CONTAINER),"/docker-healthcheck.sh") && \
 	$(call run_command,$(DEFAULT_CNF_CONTAINER),"python $(WORKDIR)/src/apps/$(CNF_CLI_DIR)/__main__.py $(APP_NAME):cnf:mongodb-setup") && \
 	$(call run_command,$(DEFAULT_CNF_CONTAINER),"python $(WORKDIR)/src/apps/$(CNF_CLI_DIR)/__main__.py $(APP_NAME):cnf:amqp-setup") && \
-	DEBUG=0 $(DOCKER_COMPOSE) up -d $(DEFAULT_CNF_CONTAINER);\
+	DEBUG=$(DEBUG) $(DOCKER_COMPOSE) up -d $(DEFAULT_CNF_CONTAINER);\
 
 .PHONY: prepare-local
 prepare-local: ## Starts application process locally.
@@ -110,12 +111,12 @@ static-code-analysis: ## Executes static code analysis.
 .PHONY: unit-tests
 unit-tests: ## Executes unit tests.
 	@echo "Executing unit tests..." && \
-	$(call run_tests,unit,$(DEFAULT_APP_CONTAINER))
+	$(call run_unit_tests,$(DEFAULT_APP_CONTAINER))
 
 .PHONY: integration-tests
 integration-tests: ## Executes integration tests.
 	@echo "Executing integration tests..." && \
-	$(call run_tests,integration,$(DEFAULT_APP_CONTAINER))
+	$(call run_integration_tests,$(DEFAULT_APP_CONTAINER))
 
 .PHONY: functional-tests
 functional-tests: ## Executes functional tests.
@@ -144,7 +145,7 @@ clean: ## Cleans containers, volumes and networks.
 		echo "Removing volumes..." && \
 		(docker volume rm -f $(APP_NAME)_mongodb || exit 0) && \
 		(docker volume rm -f $(APP_NAME)_rabbitmq || exit 0);\
-    fi
+	fi
 	@echo "Removing networks..." && \
 	docker network rm $(APP_NAME) || exit 0
 
@@ -161,23 +162,27 @@ endef
 endif
 
 define run_security_code_analysis
-	$(call run_command,$(2),"liccheck -s=$(WORKDIR)/tests/licenses.ini -r=$(WORKDIR)/$(1)/requirements.txt")
-	$(call run_command,$(2),"bandit -c=$(WORKDIR)/tests/.bandit -r $(WORKDIR)/$(1)")
+	$(call run_command,$(2),"liccheck -s=$(WORKDIR)/tests/licenses.ini -r=$(WORKDIR)/$(1)/requirements.txt") # https://github.com/dhatim/python-license-check/pull/54
+	$(call run_command,$(2),"python -m bandit -c=$(WORKDIR)/tests/.bandit -r $(WORKDIR)/$(1)")
 endef
 
 define run_static_code_analysis
-	$(call run_command,$(2),"mypy --config-file=$(WORKDIR)/tests/mypy.ini $(WORKDIR)/$(1)")
-	$(call run_command,$(2),"pylint --rcfile=$(WORKDIR)/tests/.pylintrc $(WORKDIR)/$(1)")
+	$(call run_command,$(2),"python -m mypy --config-file=$(WORKDIR)/tests/mypy.ini $(WORKDIR)/$(1)")
+	$(call run_command,$(2),"python -m pylint --rcfile=$(WORKDIR)/tests/.pylintrc $(WORKDIR)/$(1)")
 endef
 
-define run_tests
-	$(call run_command,$(2),"bash -c 'shopt -s globstar; python -m unittest discover -s $(WORKDIR)/tests/$(1) -v'")
+define run_unit_tests
+	$(call run_command,$(1),"python -m unittest discover -s $(WORKDIR)/tests/unit -v")
+endef
+
+define run_integration_tests
+	$(call run_command,$(1),"python -m unittest discover -s $(WORKDIR)/tests/integration -v")
 endef
 
 define run_functional_tests
-	$(call run_command,$(2),"behave --stop $(WORKDIR)/tests/functional/$(1)")
+	$(call run_command,$(2),"python -m behave --stop $(WORKDIR)/tests/functional/$(1)")
 endef
 
 define run_functional_wip_tests
-	$(call run_command,$(2),"behave --tags=wip --stop $(WORKDIR)/tests/functional/$(1)")
+	$(call run_command,$(2),"python -m behave --tags=wip --stop $(WORKDIR)/tests/functional/$(1)")
 endef

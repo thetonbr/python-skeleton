@@ -1,16 +1,8 @@
-from typing import final, Union
-
-from faker import Faker
-from faker.providers import internet, misc
-from faker.providers.internet import Provider as InternetProvider
-from faker.providers.misc import Provider as MiscProvider
+from typing import final
 
 from src.libs.account.user.domain.properties import UserEmail, UserPassword
 from src.libs.shared.domain.user.properties import UserId
-
-FAKE = Faker()  # type: Union[Faker, InternetProvider, MiscProvider]
-FAKE.add_provider(internet)
-FAKE.add_provider(misc)
+from tests.unit.libs import FAKE
 
 
 class UserIdMother:

@@ -16,6 +16,7 @@ x-services-config:
 
 services:
   cnf:
+    container_name: cnf
     <<: *services-config
     build:
       target: cnf_http_development
@@ -23,6 +24,7 @@ services:
       - "${CNF_PORT}:${CNF_PORT}"
 
   app:
+    container_name: app
     <<: *services-config
     build:
       target: app_http_development

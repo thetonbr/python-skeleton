@@ -4,6 +4,7 @@ from typing import Dict, Any, Union
 
 from aio_pika import Connection, connect_robust
 from aioddd import SimpleEventBus, SimpleCommandBus, SimpleQueryBus
+from aioddd.events import EventPublishers, ConfigEventMappers
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient
 
@@ -13,8 +14,7 @@ from src.apps.app_http.middleware.http_auth_middleware import HttpAuthMiddleware
 from src.apps.app_http.middleware.http_error_middleware import HttpErrorMiddleware
 from src.apps.app_http.middleware.http_logger_middleware import HttpLoggerMiddleware
 from src.libs.shared.infrastructure.amqp_event_publisher import AMQPEventPublisher
-from src.libs.shared.infrastructure.event_mappers import ConfigEventMappers
-from src.libs.shared.infrastructure.event_publisher import EventPublisherDecorator
+from src.libs.shared.infrastructure.internal_event_publisher import InternalEventPublisher
 from src.libs.shared.infrastructure.logger import create_logger
 from src.libs.shared.infrastructure.mongodb_event_publisher import MongoDBEventPublisher, MongoDBEventPublisherMapper
 
@@ -25,7 +25,7 @@ class SharedContainer:
     logger: Logger
     mongodb_connection: Union[AsyncIOMotorClient, MongoClient]
     amqp_connection: Connection
-    event_publisher: EventPublisherDecorator
+    event_publisher: EventPublishers
     # _event_mappers_provider
     config_event_mappers: ConfigEventMappers
     # _amqp_provider
@@ -51,8 +51,9 @@ class SharedContainer:
         await cls._global_provider(container, settings)
         cls._event_mappers_provider(container, settings)
         cls._amqp_provider(container, settings)
-        container.event_publisher = EventPublisherDecorator([])
+        container.event_publisher = EventPublishers([])
         cls._cqrs_provider(container, settings)
+        cls._es_provider(container, settings)
         cls._http_middleware_provider(container, settings)
         cls._http_controller_provider(container, settings)
         return container
@@ -60,9 +61,9 @@ class SharedContainer:
     @classmethod
     async def _global_provider(cls, container: 'SharedContainer', settings: Dict[str, Any]) -> None:
         container.loop = settings['loop']
-        container.logger = create_logger('app', 'INFO')
-        container.amqp_connection = await cls._open_amqp_connection(settings)
-        container.mongodb_connection = await cls._open_mongodb_connection(settings)
+        container.logger = create_logger(name='app', level='INFO')
+        container.amqp_connection = await cls._open_amqp_connection(settings=settings)
+        container.mongodb_connection = await cls._open_mongodb_connection(settings=settings)
 
     @staticmethod
     async def _open_amqp_connection(settings: Dict[str, Any]) -> Connection:
@@ -92,37 +93,45 @@ class SharedContainer:
     @staticmethod
     def _amqp_provider(container: 'SharedContainer', settings: Dict[str, Any]) -> None:
         container.amqp_default_retries = 3
+        mappers = container.config_event_mappers.all()
         container.amqp_event_publisher = AMQPEventPublisher(
-            container.amqp_connection,
-            container.config_event_mappers.all(),
-            settings['RABBITMQ_EXCHANGE'],
+            connection=container.amqp_connection,
+            mappers=mappers,
+            exchange=settings['RABBITMQ_EXCHANGE'],
         )
         container.amqp_graveyard_event_publisher = AMQPEventPublisher(
-            container.amqp_connection,
-            container.config_event_mappers.all(),
-            f'graveyard.{settings["RABBITMQ_EXCHANGE"]}',
+            connection=container.amqp_connection,
+            mappers=mappers,
+            exchange=f'graveyard.{settings["RABBITMQ_EXCHANGE"]}',
         )
         container.mongodb_event_publisher = MongoDBEventPublisher(
-            container.mongodb_connection.get_database(settings['MONGODB_DATABASE']),
-            MongoDBEventPublisherMapper(container.config_event_mappers.all())
+            database=container.mongodb_connection.get_database(name=settings['MONGODB_DATABASE']),
+            mapper=MongoDBEventPublisherMapper(mappers=mappers)
         )
 
     @staticmethod
     def _cqrs_provider(container: 'SharedContainer', _: Dict[str, Any]) -> None:
-        container.event_bus = SimpleEventBus([])
-        container.command_bus = SimpleCommandBus([])
-        container.query_bus = SimpleQueryBus([])
+        container.command_bus = SimpleCommandBus(handlers=[])
+        container.query_bus = SimpleQueryBus(handlers=[])
+
+    @staticmethod
+    def _es_provider(container: 'SharedContainer', _: Dict[str, Any]) -> None:
+        container.event_bus = SimpleEventBus(handlers=[])
+        container.event_publisher.add(publishers=InternalEventPublisher(event_bus=container.event_bus))
 
     @staticmethod
     def _http_middleware_provider(container: 'SharedContainer', setting: Dict[str, Any]) -> None:
-        container.http_app_logger_middleware = HttpLoggerMiddleware(container.logger)
-        container.http_app_error_middleware = HttpErrorMiddleware(container.logger, setting['DEBUG'] == '1')
+        container.http_app_logger_middleware = HttpLoggerMiddleware(logger=container.logger)
+        container.http_app_error_middleware = HttpErrorMiddleware(
+            logger=container.logger,
+            debug=setting['DEBUG'] == '1'
+        )
 
     @staticmethod
     def _http_controller_provider(container: 'SharedContainer', _: Dict[str, Any]) -> None:
         validator = HTTPValidator()
         container.http_app_root_get_controller = RootGetController(
-            container.command_bus,
-            container.query_bus,
-            validator,
+            command_bus=container.command_bus,
+            query_bus=container.query_bus,
+            validator=validator,
         )

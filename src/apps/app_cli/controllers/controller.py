@@ -2,7 +2,7 @@ import traceback
 from abc import ABC, abstractmethod
 from logging import Logger
 from traceback import print_tb
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, cast
 
 from aioddd import Event, EventMapper, CommandBus
 from aiormq import ChannelNotFoundEntity, ChannelAccessRefused, ChannelLockedResource
@@ -39,8 +39,9 @@ class BaseConsumerController(ABC, BaseController):
     async def __call__(self, args: Dict[str, Any]) -> int:
         self._logger.info({'message': f'Consuming {self._queue_name}...'})
         try:
-            self._retries = int(self._retries if args.get('retries') is None else args.get('retries'))
-            self._stop = bool(args.get('stop', self._stop))
+            if not args.get('retries') is None:
+                self._retries = cast(int, args.get('retries'))
+            self._stop = cast(bool, args.get('stop', self._stop))
             await self._consumer.consume(self._queue_name, int(args.get('times', 0)), self._callback)
         except (ChannelAccessRefused, ChannelNotFoundEntity, ChannelLockedResource) as err:
             self._logger.info({'message': f'AMQP Channel not available error {str(type(err))}: {str(err)}'})

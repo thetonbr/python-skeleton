@@ -1,6 +1,6 @@
 aio-pika==6.6.1
 aiocli==1.1.1
-aioddd==1.0.5
+aioddd==1.1.0
 aiohttp==4.0.0a1
 bcrypt==3.2.0
 cachetools==4.1.1

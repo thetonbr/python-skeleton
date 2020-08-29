@@ -1,4 +1,4 @@
-## example
+## python-skeleton
 
 ### Requirements
 

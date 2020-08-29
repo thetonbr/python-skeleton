@@ -19,6 +19,7 @@ from src.libs.shared.infrastructure.configurator.amqp.configurer import AMQPConf
 from src.libs.shared.infrastructure.configurator.amqp.services import RootAMQPServiceConfig
 from src.libs.shared.infrastructure.configurator.amqp.services.account import AccountAMQPServiceConfig
 from src.libs.shared.infrastructure.configurator.mongodb.configurer import MongoDBConfigurerService
+from src.libs.shared.infrastructure.configurator.mongodb.services import RootMongoDBServiceConfigData
 from src.libs.shared.infrastructure.configurator.mongodb.services.account import AccountMongoDBServiceConfigData
 from src.libs.shared.infrastructure.logger import create_logger
 
@@ -103,6 +104,7 @@ class Builder:
         container.mongodb_configurer_service = MongoDBConfigurerService(
             container.mongodb_connection,
             [
+                *RootMongoDBServiceConfigData,
                 *AccountMongoDBServiceConfigData,
             ],
             container.logger

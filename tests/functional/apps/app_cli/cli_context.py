@@ -8,9 +8,9 @@ from behave.model import Scenario
 from behave.runner import Context
 
 from src.apps.app_cli.__main__ import CliApp
-from tests.functional import TEST_LOOP
-from tests.functional.apps.context_amqp_middleware import ContextAMQPMiddleware
-from tests.functional.apps.context_mongodb_middleware import ContextMongoDBMiddleware
+from tests.functional import TEST_LOOP, BEFORE_SCENARIO_SETUP, AFTER_SCENARIO_CLEAN
+from tests.functional.apps.contexts.amqp_middleware_context import ContextAMQPMiddleware
+from tests.functional.apps.contexts.mongodb_middleware_context import ContextMongoDBMiddleware
 
 
 def before_all(ctx: Context) -> None:
@@ -22,8 +22,9 @@ async def before_scenario(ctx: Context, sce: Scenario) -> None:
     app = await ctx.cli_app.__aenter__()
     ctx.container = ctx.cli_app.container
     ctx.exit_code = None
-    await ContextMongoDBMiddleware.before_scenario(ctx, sce)
-    await ContextAMQPMiddleware.before_scenario(ctx, sce)
+    if BEFORE_SCENARIO_SETUP == "1":
+        await ContextMongoDBMiddleware.before_scenario(ctx, sce)
+        await ContextAMQPMiddleware.before_scenario(ctx, sce)
     ctx.cli_commander = TestCommander(app, loop=TEST_LOOP)
     ctx.cli_client = TestClient(ctx.cli_commander)
     await ctx.cli_commander.start_commander()
@@ -60,6 +61,7 @@ class ContextCLI:
 
 @async_run_until_complete(loop=TEST_LOOP)
 async def after_scenario(ctx: Context, sce: Scenario) -> None:
-    await ContextAMQPMiddleware.after_scenario(ctx, sce)
-    await ContextMongoDBMiddleware.after_scenario(ctx, sce)
+    if AFTER_SCENARIO_CLEAN == "1":
+        await ContextAMQPMiddleware.after_scenario(ctx, sce)
+        await ContextMongoDBMiddleware.after_scenario(ctx, sce)
     await ctx.cli_commander.close()

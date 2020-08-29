@@ -47,7 +47,6 @@ x-services-config:
 
 services:
   cnf:
-    container_name: cnf
     <<: *services-config
     build:
       context: .
@@ -57,7 +56,6 @@ services:
     restart: "no"
 
   app:
-    container_name: app
     <<: *services-config
     image: ${REGISTRY}/app:${VERSION}
     build:

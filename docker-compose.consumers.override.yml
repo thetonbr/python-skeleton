@@ -14,5 +14,6 @@ x-consumer-config:
     <<: *env-vars
 
 services:
-  skeleton_cli_consumer_on_internal_user_deleted:
+  cli_account_consumer_on_internal_user_deleted:
+    container_name: cli_account_consumer_on_internal_user_deleted
     <<: *consumer-config

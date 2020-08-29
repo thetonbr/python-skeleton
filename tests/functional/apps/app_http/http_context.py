@@ -7,9 +7,9 @@ from behave.model import Scenario
 from behave.runner import Context
 
 from src.apps.app_http.__main__ import HttpApp
-from tests.functional import TEST_LOOP
-from tests.functional.apps.context_amqp_middleware import ContextAMQPMiddleware
-from tests.functional.apps.context_mongodb_middleware import ContextMongoDBMiddleware
+from tests.functional import TEST_LOOP, AFTER_SCENARIO_CLEAN, BEFORE_SCENARIO_SETUP
+from tests.functional.apps.contexts.amqp_middleware_context import ContextAMQPMiddleware
+from tests.functional.apps.contexts.mongodb_middleware_context import ContextMongoDBMiddleware
 from tests.functional.apps.utils import sanitize_objects
 
 
@@ -23,8 +23,9 @@ async def before_scenario(ctx: Context, sce: Scenario) -> None:
     app.on_shutdown.clear()
     ctx.container = ctx.http_app.container
     ctx.http_response = None
-    await ContextMongoDBMiddleware.before_scenario(ctx, sce)
-    await ContextAMQPMiddleware.before_scenario(ctx, sce)
+    if BEFORE_SCENARIO_SETUP == "1":
+        await ContextMongoDBMiddleware.before_scenario(ctx, sce)
+        await ContextAMQPMiddleware.before_scenario(ctx, sce)
     ctx.http_server = TestServer(app)
     ctx.http_client = TestClient(ctx.http_server)
     await ctx.http_server.start_server()
@@ -91,6 +92,7 @@ class ContextHTTP:
 
 @async_run_until_complete(loop=TEST_LOOP)
 async def after_scenario(ctx: Context, sce: Scenario) -> None:
-    await ContextAMQPMiddleware.after_scenario(ctx, sce)
-    await ContextMongoDBMiddleware.after_scenario(ctx, sce)
+    if AFTER_SCENARIO_CLEAN == "1":
+        await ContextAMQPMiddleware.after_scenario(ctx, sce)
+        await ContextMongoDBMiddleware.after_scenario(ctx, sce)
     await ctx.http_server.close()

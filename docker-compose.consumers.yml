@@ -17,7 +17,6 @@ x-consumer-config:
     - example
 
 services:
-  skeleton_cli_consumer_on_internal_user_deleted:
-    container_name: skeleton_cli_consumer_on_internal_user_deleted
+  cli_account_consumer_on_internal_user_deleted:
     <<: *consumer-config
-    command: src/apps/app_cli skeleton:account:consumer-on-internal-user-deleted
+    command: src/apps/app_cli example:account:consumer-on-internal-user-deleted

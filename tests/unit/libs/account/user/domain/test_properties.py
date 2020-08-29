@@ -2,11 +2,11 @@ from typing import final
 from unittest import TestCase
 
 from aioddd import IdInvalidError
-from unittest_data_provider import data_provider
 
 from src.libs.account.user.domain.errors import UserEmailNotValidError, UserPasswordNotValidError
 from src.libs.account.user.domain.properties import UserEmail, UserPassword
 from src.libs.shared.domain.user.properties import UserId
+from tests.unit.libs import data_provider
 
 
 @final

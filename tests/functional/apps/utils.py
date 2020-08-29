@@ -1,10 +1,5 @@
 from typing import Union, Dict, Any, List
 
-
-def raise_(err: BaseException) -> BaseException:
-    raise err
-
-
 SanitizeObject = Union[Dict[Any, Any], List[Any]]
 
 

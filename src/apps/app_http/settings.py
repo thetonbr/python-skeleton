@@ -12,6 +12,7 @@ ENVIRONMENT = _get_env('ENVIRONMENT', 'production')
 OAUTH_SECRET = _get_env('OAUTH_SECRET', 'secret')
 OAUTH_EXPIRATION_DAYS = _get_env('OAUTH_EXPIRATION_DAYS', '14')
 LIVE_RELOAD = _get_env('LIVE_RELOAD', '0')
+ENABLE_EVENT_HANDLERS = _get_env('ENABLE_EVENT_HANDLERS', '1')
 
 DEBUG = _get_env('DEBUG', '0')
 DEBUG_HOST = _get_env('DEBUG_HOST', '0.0.0.0')
