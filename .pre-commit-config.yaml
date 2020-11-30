@@ -1,0 +1,29 @@
+---
+repos:
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: master
+    hooks:
+      - id: commitizen
+        stages: [ commit-msg ]
+  - repo: local
+    hooks:
+      - id: fmt
+        name: fmt
+        entry: make fmt LOCAL=1
+        language: system
+        stages: [ commit-msg ]
+      - id: security-analysis
+        name: security-analysis
+        entry: make security-analysis LOCAL=1
+        language: system
+        stages: [ commit-msg ]
+      - id: static-analysis
+        name: static-analysis
+        entry: make static-analysis LOCAL=1
+        language: system
+        stages: [ commit-msg ]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: master
+    hooks:
+      - id: no-commit-to-branch
+        stages: [ commit-msg ]

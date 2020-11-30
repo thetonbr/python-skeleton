@@ -1,32 +1,60 @@
-version: "3.8"
-
-x-env-vars:
-  &env-vars
-  ENVIRONMENT: "${ENVIRONMENT:-development}"
-
-x-services-config:
-  &services-config
-  volumes:
-    - .:/app
-  restart: unless-stopped
-  environment:
-    <<: *env-vars
-  networks:
-    - example
-
 services:
-  cnf:
-    container_name: cnf
-    <<: *services-config
-    build:
-      target: cnf_http_development
-    ports:
-      - "${CNF_PORT}:${CNF_PORT}"
+  # applications
 
   app:
-    container_name: app
-    <<: *services-config
     build:
-      target: app_http_development
+      target: development
+    command: [ "api" ]
+    container_name: app
+    environment:
+      ENVIRONMENT: "development"
+      MONGODB_USERNAME: "${MONGODB_ROOT_USERNAME}"
+      MONGODB_PASSWORD: "${MONGODB_ROOT_PASSWORD}"
     ports:
-      - "${APP_PORT}:${APP_PORT}"
+      - "${HTTP_PORT}:${HTTP_PORT}"
+    restart: unless-stopped
+    volumes:
+      - .:/app
+
+  # services
+
+  mailhog:
+    container_name: mailhog
+    entrypoint: "sh -c 'echo \"$$MH_AUTH_USERNAME:$$MH_AUTH_PASSWORD\" > auth-file.txt && MailHog -auth-file auth-file.txt'"
+    environment:
+      MH_AUTH_USERNAME: "${EMAIL_HOST_USER}"
+      MH_AUTH_PASSWORD: "${EMAIL_HOST_PASSWORD}"
+      MH_STORAGE: "maildir"
+    image: mailhog/mailhog:v1.0.1
+    networks:
+      - project
+    ports:
+      - "${EMAIL_UI_PORT}:${EMAIL_UI_PORT}"
+      - "${EMAIL_PORT}:${EMAIL_PORT}"
+    restart: unless-stopped
+    volumes:
+      - project_mailhog:/maildir
+
+  mongodb:
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "${MONGODB_ROOT_USERNAME}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGODB_ROOT_PASSWORD}"
+      MONGO_INITDB_DATABASE: "${MONGODB_ROOT_DATABASE}"
+    image: mongo:4.4 # https://docs.atlas.mongodb.com/cluster-config/mongodb-version/
+    networks:
+      - project
+    ports:
+      - "${MONGODB_PORT}:${MONGODB_PORT}"
+    restart: unless-stopped
+    volumes:
+      - project_mongodb:/data/db
+      - project_mongodb:/var/log/mongodb
+
+version: "3.7"
+
+volumes:
+  project_mailhog:
+    name: project_mailhog
+  project_mongodb:
+    name: project_mongodb

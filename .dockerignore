@@ -7,13 +7,11 @@
 dist
 
 # Internal
+.coverage
+.env.local
 .gitignore
-.local.env
-ci.sh
-docker-compose.consumers.override.yml
-docker-compose.consumers.yml
+*.pyc
+__pycache__/
 docker-compose.override.yml
-docker-compose.services.yml
 docker-compose.yml
-Makefile
-README.md
+var/

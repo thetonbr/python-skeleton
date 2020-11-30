@@ -1,66 +1,41 @@
-version: "3.8"
-
-x-env-vars:
-  &env-vars
-  VERSION: "${VERSION}"
-  TZ: "${TZ}"
-  ENVIRONMENT: "${ENVIRONMENT:-production}"
-  PYTHONPATH: "${PYTHONPATH}"
-
-  CNF_HOST: "${CNF_HOST}"
-  CNF_PORT: "${CNF_PORT}"
-  APP_HOST: "${APP_HOST}"
-  APP_PORT: "${APP_PORT}"
-
-  OAUTH_SECRET: "${OAUTH_SECRET}"
-  OAUTH_EXPIRATION_DAYS: "${OAUTH_EXPIRATION_DAYS}"
-
-  MONGODB_USERNAME: "${MONGODB_USERNAME}"
-  MONGODB_PASSWORD: "${MONGODB_PASSWORD}"
-  MONGODB_HOST: "${MONGODB_HOST}"
-  MONGODB_PORT: "${MONGODB_PORT}"
-  MONGODB_DATABASE: "${MONGODB_DATABASE}"
-  MONGODB_ROOT_DATABASE: "${MONGODB_ROOT_DATABASE}"
-
-  MONGODB_DATABASE_ACCOUNT: "${MONGODB_DATABASE_ACCOUNT}"
-
-  RABBITMQ_USER: "${RABBITMQ_USER}"
-  RABBITMQ_PASSWORD: "${RABBITMQ_PASSWORD}"
-  RABBITMQ_HOST: "${RABBITMQ_HOST}"
-  RABBITMQ_PORT: "${RABBITMQ_PORT}"
-  RABBITMQ_UI_PORT: "${RABBITMQ_UI_PORT}"
-  RABBITMQ_VHOST: "${RABBITMQ_VHOST}"
-  RABBITMQ_EXCHANGE: "${RABBITMQ_EXCHANGE}"
-
-  RABBITMQ_EXCHANGE_ACCOUNT: "${RABBITMQ_EXCHANGE_ACCOUNT}"
-
 networks:
-  example:
-    external: true
-
-x-services-config:
-  &services-config
-  environment:
-    <<: *env-vars
-  networks:
-    - example
+  project:
+    name: project
 
 services:
-  cnf:
-    <<: *services-config
-    build:
-      context: .
-      dockerfile: docker/python/Dockerfile
-      target: cnf_cli_production
-    image: ${REGISTRY}/cnf:${VERSION}
-    restart: "no"
+  # applications
 
   app:
-    <<: *services-config
-    image: ${REGISTRY}/app:${VERSION}
     build:
       context: .
-      dockerfile: docker/python/Dockerfile
-      target: app_http_production
-    expose:
-      - "${APP_PORT}"
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      ENVIRONMENT: "production"
+      VERSION: "${VERSION:-latest}"
+      TZ: "${TZ}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      OAUTH_SECRET: "${OAUTH_SECRET}"
+      OAUTH_EXPIRATION_DAYS: "${OAUTH_EXPIRATION_DAYS}"
+      HTTP_HOST: "${HTTP_HOST}"
+      HTTP_PORT: "${HTTP_PORT}"
+      MONGODB_ROOT_USERNAME: "${MONGODB_ROOT_USERNAME}"
+      MONGODB_ROOT_PASSWORD: "${MONGODB_ROOT_PASSWORD}"
+      MONGODB_ROOT_DATABASE: "${MONGODB_ROOT_DATABASE}"
+      MONGODB_USERNAME: "${MONGODB_USERNAME}"
+      MONGODB_PASSWORD: "${MONGODB_PASSWORD}"
+      MONGODB_DATABASE: "${MONGODB_DATABASE}"
+      MONGODB_HOST: "${MONGODB_HOST}"
+      MONGODB_PORT: "${MONGODB_PORT}"
+      EMAIL_HOST: "${EMAIL_HOST}"
+      EMAIL_PORT: "${EMAIL_PORT}"
+      EMAIL_HOST_USER: "${EMAIL_HOST_USER}"
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
+      EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
+      EMAIL_FROM: "${EMAIL_FROM}"
+      EMAIL_UI_PORT: "${EMAIL_UI_PORT}"
+    image: ${REGISTRY}/app:${VERSION}
+    networks:
+      - project
+
+version: "3.7"
