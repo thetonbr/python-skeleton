@@ -1,8 +1,8 @@
-from aioddd import CommandBus, Container, EventBus, QueryBus
+from aioddd import Container
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 
-from project.apps.settings import container
+from project.apps.api.middleware.utils import get_current_container
 from project.libs.user.application.authenticator_service import AuthenticatorService
 from project.libs.user.application.finder_service import (
     UserFinderResponse,
@@ -10,23 +10,6 @@ from project.libs.user.application.finder_service import (
 )
 from project.libs.user.domain.errors import UserUnauthorizedError
 from project.libs.user.domain.properties import UserId
-
-
-def get_current_container() -> Container:
-    return container()
-
-
-def get_current_dispatcher(di: Container = Depends(get_current_container)) -> CommandBus:
-    return di.get(CommandBus)
-
-
-def get_current_asker(di: Container = Depends(get_current_container)) -> QueryBus:
-    return di.get(QueryBus)
-
-
-def get_current_notifier(di: Container = Depends(get_current_container)) -> EventBus:
-    return di.get(EventBus)
-
 
 UserAuth = UserFinderResponse
 

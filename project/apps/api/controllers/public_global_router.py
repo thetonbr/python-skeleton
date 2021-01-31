@@ -4,7 +4,7 @@ from typing import Any, Dict
 from aioddd import Container
 from fastapi import APIRouter, Depends
 
-from project.apps.api.middleware.auth_handler import get_current_container
+from project.apps.api.middleware.utils import get_current_container
 
 public_global = APIRouter()
 

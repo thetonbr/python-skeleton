@@ -4,10 +4,7 @@ from aioddd import CommandBus, QueryBus
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
-from project.apps.api.middleware.auth_handler import (
-    get_current_asker,
-    get_current_dispatcher,
-)
+from project.apps.api.middleware.utils import get_current_dispatcher, get_current_asker
 from project.libs.user.application.token_generator_service import TokenGeneratorResponse
 from project.libs.user.infrastructure.cqrs.forget_user_password_command_handler import (
     ForgetUserPasswordCommand,

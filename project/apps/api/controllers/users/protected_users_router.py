@@ -6,10 +6,9 @@ from fastapi import APIRouter, Depends
 from project.apps.api.middleware.auth_handler import (
     UserAuth,
     auth_guard,
-    get_current_asker,
-    get_current_dispatcher,
     get_current_user,
 )
+from project.apps.api.middleware.utils import get_current_dispatcher, get_current_asker
 from project.libs.user.application.finder_service import UserFinderResponse
 from project.libs.user.infrastructure.cqrs.change_user_password_command_handler import (
     ChangeUserPasswordCommand,

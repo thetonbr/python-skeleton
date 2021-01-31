@@ -18,7 +18,7 @@ from orjson import dumps, loads
 from pydantic import BaseModel, ValidationError
 from starlette.exceptions import HTTPException
 
-from project.apps.api.middleware.auth_handler import get_current_container
+from project.apps.api.middleware.utils import get_current_container
 
 
 @final
