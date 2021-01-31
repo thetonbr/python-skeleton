@@ -54,7 +54,7 @@ _fmt() {
 
 _security_analysis() {
   python3 -m liccheck -r requirements-dev.txt
-  python3 -m bandit -s B101,B311 -r "$project"
+  python3 -m bandit -s B101,B104,B311 -r "$project"
 }
 
 _static_analysis() {
