@@ -46,7 +46,7 @@ git clone git@github.com:ticdenis/python-skeleton.git ~/Developer/project
 cd ~/Developer/project
 
 # Install PyCharm Community with jetbrains-toolbox application
-  # Setup Python interpeter in "Preferences | Project: <project> | Python Interpreter"
+  # Setup Python interpreter in "Preferences | Project: <project> | Python Interpreter"
   # Set Continuation indent" to "4" in "Preferences | Editor | Code Style | Python | Tabs and Indents"
   # Mark Sort imported names in "from" imports in "Preferences | Editor | Code Style | Python | Imports"
   # Install "Toml" and "pytest imp" plugins in "Preferences | Plugins"
