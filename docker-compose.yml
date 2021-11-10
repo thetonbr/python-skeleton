@@ -11,6 +11,7 @@ services:
       dockerfile: Dockerfile
       target: production
     environment:
+      DEBUG: "${DEBUG:-0}"
       ENVIRONMENT: "production"
       VERSION: "${VERSION:-latest}"
       TZ: "${TZ}"
@@ -19,6 +20,7 @@ services:
       OAUTH_EXPIRATION_DAYS: "${OAUTH_EXPIRATION_DAYS}"
       HTTP_HOST: "${HTTP_HOST}"
       HTTP_PORT: "${HTTP_PORT}"
+      MONGODB_PROTOCOL: "${MONGODB_PROTOCOL}"
       MONGODB_ROOT_USERNAME: "${MONGODB_ROOT_USERNAME}"
       MONGODB_ROOT_PASSWORD: "${MONGODB_ROOT_PASSWORD}"
       MONGODB_ROOT_DATABASE: "${MONGODB_ROOT_DATABASE}"
@@ -33,9 +35,8 @@ services:
       EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
       EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
       EMAIL_FROM: "${EMAIL_FROM}"
-      EMAIL_UI_PORT: "${EMAIL_UI_PORT}"
-    image: ${REGISTRY}/app:${VERSION}
+    image: ${REGISTRY}/project-app:${VERSION}
     networks:
-      - project
+      project:
 
 version: "3.7"

@@ -67,6 +67,10 @@ class MongoDBUserRepository(UserRepository, MongoDBBaseRepository):
             raise UserNotFoundError.create(detail={'id': user_id.value()})
         return user
 
+    async def find_all(self) -> list[User]:
+        await self._ensure_indexes()
+        return await self._find(self._collection)
+
     async def find_email(self, email: UserEmail) -> User:
         await self._ensure_indexes()
         user: Optional[User] = await self._find_one(self._collection, {'email': email.value()})

@@ -1,6 +1,5 @@
-from aiocli.commander import Application
-from aiocli.commander_app import Depends
-from aioddd import Container
+from aiocli.commander import Application, Depends
+from aiodi import Container
 
 from project.apps.cli.middleware.utils import get_current_container
 

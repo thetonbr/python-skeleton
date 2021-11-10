@@ -7,6 +7,7 @@ from aioddd.testing import mock
 from project.libs.user.application.finder_service import (
     UserFinderService,
     UserFullFinderService,
+    UsersFinderService,
 )
 from project.libs.user.domain.repositories import UserRepository
 from tests.unit.project.libs.user.domain.aggregates_mothers import UserMother
@@ -58,3 +59,25 @@ class TestUserFullFinderService:
         assert res.email == user.email().value()
         assert res.refresh_token == user.refresh_token().value()
         assert res.refresh_token_expiration_in == user.refresh_token_expiration_in().value()
+
+
+@final
+class TestUsersFinderService:
+    _mock_user_repository: Mock
+    _sut: UsersFinderService
+
+    def setup(self) -> None:
+        self._mock_user_repository = mock(UserRepository, ['find_all'])
+        self._sut = UsersFinderService(self._mock_user_repository)
+
+    @pytest.mark.asyncio
+    async def test_finds_successfully(self) -> None:
+        users = [UserMother.random()]
+        self._mock_user_repository.find_all.return_value = users
+
+        res = await self._sut()
+
+        self._mock_user_repository.find_all.assert_called_once()
+        assert len(res) == 1
+        assert res[0].id == users[0].id().value()
+        assert res[0].email == users[0].email().value()

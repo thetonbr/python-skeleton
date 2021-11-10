@@ -15,10 +15,14 @@ def event_loop() -> AbstractEventLoop:
 @fixture(scope='session')
 async def mongodb_disposable_connection() -> MongoDBConnection:
     connection = MongoDBConnection(
-        uri_connection='mongodb://'
-        f'{env("mongodb_username", typ=str)}:{env("mongodb_password", typ=str)}@'
-        f'{env("mongodb_host", typ=str)}:{env("mongodb_port", typ=int)}/'
-        f'{env("mongodb_root_database", typ=str)}',
+        uri_connection="{}://{}:{}@{}{}/{}".format(
+            env("mongodb_protocol", typ=str),
+            env("mongodb_username", typ=str),
+            env("mongodb_password", typ=str),
+            env("mongodb_host", typ=str),
+            (f':{env("mongodb_port", typ=int)}' if env("mongodb_protocol", typ=str) == "mongodb" else ''),
+            env("mongodb_root_database", typ=str),
+        ),
         database_name=f'project_{FAKE.md5()}',
     )
     yield connection

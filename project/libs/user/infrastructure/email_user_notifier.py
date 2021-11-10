@@ -1,10 +1,10 @@
-import smtplib
 from dataclasses import dataclass
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import final
+from smtplib import SMTP
+from typing import Optional, final
 
-from retry import retry
+from opnieuw import retry
 
 from project.libs.user.domain.properties import UserEmail, UserId, UserRefreshToken
 from project.libs.user.domain.repositories import UserNotifier
@@ -22,66 +22,61 @@ class EmailConfig:
 
 @final
 class EmailUserNotifier(UserNotifier):
-    __slots__ = '_config'
+    _config: EmailConfig
+    _smtp_client: Optional[SMTP]
 
     def __init__(self, config: EmailConfig) -> None:
         self._config = config
+        self._smtp_client = None
 
-    @retry(ConnectionRefusedError, tries=3, delay=1)
+    def __del__(self) -> None:
+        if self._smtp_client:
+            self._smtp.quit()
+
     async def notify_user_registered(self, user_id: UserId, email: UserEmail) -> None:
-        server = smtplib.SMTP(self._config.host, self._config.port)
+        self._send_mail(
+            user_id=user_id.value(),
+            to_address=email.value(),
+            subject='Welcome to Project',
+            mime_text_plain_content=f'Welcome {email.value()}',
+        )
 
-        if self._config.use_tls:
-            server.starttls()
-
-        msg = MIMEMultipart()
-        msg['From'] = self._config.from_user
-        msg['To'] = email.value()
-        msg['Subject'] = 'Welcome to project'
-        msg['X-UserId'] = user_id.value()
-        msg.attach(MIMEText(f'Welcome {email.value()}', 'plain'))
-
-        server.login(self._config.host_user, self._config.host_password)
-
-        server.sendmail(msg['From'], msg['To'], msg.as_string())
-        server.quit()
-
-    @retry(ConnectionRefusedError, tries=3, delay=1)
     async def notify_user_password_forgotten(
         self, user_id: UserId, email: UserEmail, refresh_token: UserRefreshToken
     ) -> None:
-        server = smtplib.SMTP(self._config.host, self._config.port)
+        self._send_mail(
+            user_id=user_id.value(),
+            to_address=email.value(),
+            subject='Project - Here you have your reset password code',
+            mime_text_plain_content=f'Here you have your reset password code: {refresh_token.value()}',
+        )
 
-        if self._config.use_tls:
-            server.starttls()
-
-        msg = MIMEMultipart()
-        msg['From'] = self._config.from_user
-        msg['To'] = email.value()
-        msg['Subject'] = 'project - Here you have your reset password code'
-        msg['X-UserId'] = user_id.value()
-        msg.attach(MIMEText(f'Here you have your reset password code: {refresh_token.value()}', 'plain'))
-
-        server.login(self._config.host_user, self._config.host_password)
-
-        server.sendmail(msg['From'], msg['To'], msg.as_string())
-        server.quit()
-
-    @retry(ConnectionRefusedError, tries=3, delay=1)
     async def notify_user_password_resetted(self, user_id: UserId, email: UserEmail) -> None:
-        server = smtplib.SMTP(self._config.host, self._config.port)
+        self._send_mail(
+            user_id=user_id.value(),
+            to_address=email.value(),
+            subject='Project - The password was reset',
+            mime_text_plain_content='The password was reset',
+        )
 
-        if self._config.use_tls:
-            server.starttls()
+    @property
+    def _smtp(self) -> SMTP:
+        if self._smtp_client is None:
+            self._smtp_client = SMTP(self._config.host, self._config.port)
+            if self._config.use_tls:
+                self._smtp_client.starttls()
+            self._smtp_client.login(self._config.host_user, self._config.host_password)
+        return self._smtp_client
 
+    @retry(retry_on_exceptions=ConnectionRefusedError, max_calls_total=3, retry_window_after_first_call_in_seconds=1)
+    def _send_mail(self, user_id: str, to_address: str, subject: str, mime_text_plain_content: str) -> None:
         msg = MIMEMultipart()
+
         msg['From'] = self._config.from_user
-        msg['To'] = email.value()
-        msg['Subject'] = 'project - The password was reset'
-        msg['X-UserId'] = user_id.value()
-        msg.attach(MIMEText('The password was reset', 'plain'))
+        msg['To'] = to_address
+        msg['Subject'] = subject
+        msg['X-UserId'] = user_id
 
-        server.login(self._config.host_user, self._config.host_password)
+        msg.attach(MIMEText(_text=mime_text_plain_content, _subtype='plain'))
 
-        server.sendmail(msg['From'], msg['To'], msg.as_string())
-        server.quit()
+        self._smtp.sendmail(from_addr=msg['From'], to_addrs=msg['To'], msg=msg.as_string())

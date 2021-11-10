@@ -1,7 +1,8 @@
 from http import HTTPStatus
-from typing import Any, Dict
+from os import environ
+from typing import Any
 
-from aioddd import Container
+from aiodi import Container
 from fastapi import APIRouter, Depends
 
 from project.apps.api.middleware.utils import get_current_container
@@ -11,9 +12,9 @@ public_global = APIRouter()
 
 @public_global.get(
     path='/',
-    response_model=Dict[str, Any],
+    response_model=dict[str, Any],
     status_code=HTTPStatus.OK,
     summary='Root endpoint',
 )
-async def root_get_controller(di: Container = Depends(get_current_container)) -> Dict[str, Any]:
-    return {} if di.get('env.environment', typ=str) == 'production' else di.get('env', typ=dict)
+async def root_get_controller(di: Container = Depends(get_current_container)) -> dict[str, Any]:
+    return {'app': di.get('env', typ=dict), 'server': environ} if di.get('env.debug') else {}

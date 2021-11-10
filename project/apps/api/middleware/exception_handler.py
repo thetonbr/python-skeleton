@@ -1,12 +1,11 @@
 from http import HTTPStatus
 from traceback import TracebackException
-from typing import Any, Dict, List, final
+from typing import Any, cast, final
 
 from aioddd import (
     BadRequestError,
     BaseError,
     ConflictError,
-    Container,
     Id,
     NotFoundError,
     UnauthorizedError,
@@ -18,37 +17,33 @@ from orjson import dumps, loads
 from pydantic import BaseModel, ValidationError
 from starlette.exceptions import HTTPException
 
-from project.apps.api.middleware.utils import get_current_container
+from project.apps.api.middleware.utils import is_debug
 
 
 @final
 class APIError(BaseModel):
     id: str
-    links: Dict[str, str]
+    links: dict[str, str]
     status: str
     code: str
     title: str
     detail: str
-    source: Dict[str, str]
-    meta: Dict[str, Any]
+    source: dict[str, str]
+    meta: dict[str, Any]
 
 
 @final
 class APIErrors(BaseModel):
-    errors: List[APIError]
-    meta: Dict[str, Any]
+    errors: list[APIError]
+    meta: dict[str, Any]
 
 
-def is_debug(di: Container = Depends(get_current_container)) -> bool:
-    return di.get('env.environment', typ=str) != 'production'
-
-
-def exception_handler(req: Request, err: Exception, debug: bool = Depends(is_debug)) -> ORJSONResponse:
+def exception_handler(req: Request, err: BaseException, debug: bool = Depends(is_debug)) -> ORJSONResponse:
     base_error = _map_to_base_error(req=req, err=err)
     status_code = _map_status_code(err=base_error)
     errors = [_err_to_dict(err=base_error, status_code=str(status_code), self=req.url.path)]
     if isinstance(err, ValidationError):
-        errors = _add_validations_errors(err=err, errors=errors)
+        errors = _add_validations_errors(err=cast(ValidationError, err), errors=errors)
     return ORJSONResponse(
         status_code=status_code,
         content=APIErrors(
@@ -64,18 +59,21 @@ def _exception_to_string(err: BaseException) -> str:
 
 def _map_to_base_error(req: Request, err: BaseException) -> BaseError:
     if isinstance(err, BaseError):
-        return err
+        return cast(BaseError, err)
     if isinstance(err, HTTPException):
-        if err.status_code == 401:
-            return UnauthorizedError.create(detail={'route': req.url.path}).with_exception(err)
-        elif err.status_code == 404:
-            return NotFoundError.create(detail={'route': req.url.path}).with_exception(err)
+        matches = {400: BadRequestError, 401: UnauthorizedError, 404: NotFoundError, 409: ConflictError}
+        http_err = cast(HTTPException, err)
+        if len(err.args) == 0:
+            err.args = (http_err.detail,)
+        if err_class := matches.get(http_err.status_code, None):
+            return err_class.create(detail={'route': req.url.path}).with_exception(http_err)
     if isinstance(err, ValidationError):
-        return BadRequestError.create(detail=loads(err.json())).with_exception(err)
+        val_err = cast(ValidationError, err)
+        return BadRequestError.create(detail=loads(val_err.json())).with_exception(val_err)
     return UnknownError.create().with_exception(err)
 
 
-def _errors_map() -> Dict[type, int]:
+def _errors_map() -> dict[type, int]:
     return {
         UnauthorizedError: int(HTTPStatus.UNAUTHORIZED),
         NotFoundError: int(HTTPStatus.NOT_FOUND),
@@ -105,7 +103,7 @@ def _err_to_dict(err: BaseError, status_code: str, self: str) -> APIError:
     )
 
 
-def _add_validations_errors(err: ValidationError, errors: List[APIError]) -> List[APIError]:
+def _add_validations_errors(err: ValidationError, errors: list[APIError]) -> list[APIError]:
     _error = errors[0]
     _error.code = 'invalid_request_validation'
     errors = []

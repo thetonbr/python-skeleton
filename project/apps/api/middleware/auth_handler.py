@@ -1,4 +1,4 @@
-from aioddd import Container
+from aiodi import Container
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 

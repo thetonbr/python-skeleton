@@ -30,6 +30,10 @@ class UserMother:
         return User(user_id, user_email, user_password, user_refresh_token, user_refresh_token_expiration_in)
 
     @classmethod
+    def from_id(cls, user_id: UserId) -> User:
+        return cls.create(user_id, UserEmailMother.random(), UserPasswordMother.random(), None, None)
+
+    @classmethod
     def from_password(cls, user_password: UserPassword) -> User:
         return cls.create(UserIdMother.random(), UserEmailMother.random(), user_password, None, None)
 

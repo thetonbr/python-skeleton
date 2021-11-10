@@ -2,6 +2,7 @@ from typing import Optional, final
 
 from pydantic import BaseModel
 
+from project.libs.user.domain.aggregates import User
 from project.libs.user.domain.properties import UserId
 from project.libs.user.domain.repositories import UserRepository
 
@@ -9,6 +10,10 @@ from project.libs.user.domain.repositories import UserRepository
 class UserFinderResponse(BaseModel):
     id: str
     email: str
+
+    @classmethod
+    def create(cls, user: User) -> 'UserFinderResponse':
+        return cls(id=user.id().value(), email=user.email().value())
 
 
 @final
@@ -19,8 +24,7 @@ class UserFinderService:
         self._repository = repository
 
     async def __call__(self, user_id: UserId) -> UserFinderResponse:
-        user = await self._repository.find(user_id)
-        return UserFinderResponse(id=user.id().value(), email=user.email().value())
+        return UserFinderResponse.create(user=await self._repository.find(user_id))
 
 
 class UserFullFinderResponse(BaseModel):
@@ -51,3 +55,14 @@ class UserFullFinderService:
             refresh_token=refresh_token,
             refresh_token_expiration_in=refresh_token_expiration_in,
         )
+
+
+@final
+class UsersFinderService:
+    __slots__ = '_repository'
+
+    def __init__(self, repository: UserRepository) -> None:
+        self._repository = repository
+
+    async def __call__(self) -> list[UserFinderResponse]:
+        return list(map(UserFinderResponse.create, await self._repository.find_all()))

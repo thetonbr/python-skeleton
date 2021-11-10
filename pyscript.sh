@@ -3,7 +3,7 @@
 set -e
 
 _help() {
-  echo "Usage:  pyscript.sh [OPTIONS] COMMAND
+  echo "Usage:  $0 [OPTIONS] COMMAND
 
 Commands:
   entrypoint <api|cli>                Start Python application
@@ -29,7 +29,11 @@ _entrypoint() {
   app=$1
   test -z "$app" && echo >&2 "error: missing app name" && exit 1
   shift 1
-  exec python3 "$project"/apps/"$app" "$@"
+  if [ "${AWS_LAMBDA_FUNCTION_VERSION:-unknown}" != "unknown" ]; then
+    sh /lambda-entrypoint.sh "$project"/apps/"$app" "$@"
+  else
+    exec python3 "$project"/apps/"$app" "$@"
+  fi
 }
 
 _healthcheck() {
@@ -37,12 +41,11 @@ _healthcheck() {
 }
 
 _install() {
-  pip3 uninstall -y uuid # For avoiding Python 3.9 issues
   if [ "${ENVIRONMENT:-production}" = production ]; then
-    pip3 install -r requirements.txt
+    python3 -m pip install -r requirements.txt
   else
-    pip3 install -r requirements-dev.txt
-    pre-commit install --hook-type commit-msg || true
+    python3 -m pip install -r requirements-dev.txt
+    pre-commit install --hook-type commit-msg > /dev/null|| true
   fi
 }
 
@@ -97,15 +100,16 @@ env_file=.env"$(if [ "$LOCAL" = 1 ]; then if [ ! -f .env.local ]; then cp .env .
 # shellcheck disable=SC1090
 test -f "$env_file" && . "./${env_file}"
 # shellcheck disable=SC1091
-tox_pyversion=$(grep "envlist" < "pyproject.toml" | sed "s/[^0-9]*//")
+tox_pyversion=$(grep "envlist" <"pyproject.toml" | sed "s/[^0-9]*//")
 # shellcheck disable=SC1090,SC1091
-if [ "$LOCAL" = 1 ]; then if [ -f "var/tox/py$tox_pyversion/bin/activate" ]; then . "var/tox/py$tox_pyversion/bin/activate"; fi; fi
+[ "$LOCAL" = 1 ] && [ -e "var/tox/py$tox_pyversion/bin/activate" ] && . "var/tox/py$tox_pyversion/bin/activate"
 set +a
 
 export PYTHONPATH=.
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONUNBUFFERED=1
 
+# shellcheck disable=SC2269
 case "$function" in
 -h | --help) function=help ;;
 -v | --version) function=version ;;

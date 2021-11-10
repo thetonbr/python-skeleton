@@ -11,6 +11,10 @@ class UserRepository(ABC):
         pass  # pragma: no cover
 
     @abstractmethod
+    async def find_all(self) -> list[User]:
+        pass  # pragma: no cover
+
+    @abstractmethod
     async def find_id_and_email(self, user_id: UserId, email: UserEmail) -> User:
         pass  # pragma: no cover
 

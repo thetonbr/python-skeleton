@@ -21,7 +21,7 @@ from project.libs.user.domain.properties import (
 @final
 class UserRegisteredEventMapper(EventMapper):
     event_type = UserRegistered
-    service_name = 'project.user'
+    service_name = 'project.account'
     event_name = 'users.registered'
 
     def decode(self, data: Dict[str, Any]) -> Event:
@@ -38,7 +38,7 @@ class UserRegisteredEventMapper(EventMapper):
 @final
 class UserDeletedEventMapper(EventMapper):
     event_type = UserDeleted
-    service_name = 'project.user'
+    service_name = 'project.account'
     event_name = 'users.deleted'
 
     def decode(self, data: Dict[str, Any]) -> Event:
@@ -55,7 +55,7 @@ class UserDeletedEventMapper(EventMapper):
 @final
 class UserPasswordChangedEventMapper(EventMapper):
     event_type = UserPasswordChanged
-    service_name = 'project.user'
+    service_name = 'project.account'
     event_name = 'users.password_changed'
 
     def decode(self, data: Dict[str, Any]) -> Event:
@@ -72,7 +72,7 @@ class UserPasswordChangedEventMapper(EventMapper):
 @final
 class UserPasswordForgottenEventMapper(EventMapper):
     event_type = UserPasswordForgotten
-    service_name = 'project.user'
+    service_name = 'project.account'
     event_name = 'users.password_forgotten'
 
     def decode(self, data: Dict[str, Any]) -> Event:
@@ -98,7 +98,7 @@ class UserPasswordForgottenEventMapper(EventMapper):
 @final
 class UserPasswordResettedEventMapper(EventMapper):
     event_type = UserPasswordResetted
-    service_name = 'project.user'
+    service_name = 'project.account'
     event_name = 'users.password_resetted'
 
     def decode(self, data: Dict[str, Any]) -> Event:
@@ -124,7 +124,7 @@ class UserPasswordResettedEventMapper(EventMapper):
 @final
 class UserRegisteredNotifiedEventMapper(EventMapper):
     event_type = UserRegisteredNotified
-    service_name = 'project.user'
+    service_name = 'project.account'
     event_name = 'users.user_registered_notified'
 
     def decode(self, data: Dict[str, Any]) -> Event:

@@ -8,8 +8,10 @@ services:
     container_name: app
     environment:
       ENVIRONMENT: "development"
+      MONGODB_PROTOCOL: "${MONGODB_PROTOCOL:-mongodb}"
       MONGODB_USERNAME: "${MONGODB_ROOT_USERNAME}"
       MONGODB_PASSWORD: "${MONGODB_ROOT_PASSWORD}"
+    image: ${REGISTRY:-localhost}/project-app:${VERSION:-dev}
     ports:
       - "${HTTP_PORT}:${HTTP_PORT}"
     restart: unless-stopped
@@ -22,15 +24,15 @@ services:
     container_name: mailhog
     entrypoint: "sh -c 'echo \"$$MH_AUTH_USERNAME:$$MH_AUTH_PASSWORD\" > auth-file.txt && MailHog -auth-file auth-file.txt'"
     environment:
-      MH_AUTH_USERNAME: "${EMAIL_HOST_USER}"
-      MH_AUTH_PASSWORD: "${EMAIL_HOST_PASSWORD}"
+      MH_AUTH_USERNAME: "${EMAIL_HOST_USER:-project}"
+      MH_AUTH_PASSWORD: "${EMAIL_HOST_PASSWORD:-$2a$04$F4kCWV4Igs33ray8uc.jv.2GC5n145nUpBZ4qF/RTrWgKNrLgm8KO}" # secret
       MH_STORAGE: "maildir"
-    image: mailhog/mailhog:v1.0.1
+    image: docker.io/mailhog/mailhog:v1.0.1
     networks:
       - project
     ports:
-      - "${EMAIL_UI_PORT}:${EMAIL_UI_PORT}"
-      - "${EMAIL_PORT}:${EMAIL_PORT}"
+      - "${EMAIL_UI_PORT:-8025}:${EMAIL_UI_PORT:-8025}"
+      - "${EMAIL_PORT:-1025}:${EMAIL_PORT:-1025}"
     restart: unless-stopped
     volumes:
       - project_mailhog:/maildir
@@ -38,14 +40,14 @@ services:
   mongodb:
     container_name: mongodb
     environment:
-      MONGO_INITDB_ROOT_USERNAME: "${MONGODB_ROOT_USERNAME}"
-      MONGO_INITDB_ROOT_PASSWORD: "${MONGODB_ROOT_PASSWORD}"
-      MONGO_INITDB_DATABASE: "${MONGODB_ROOT_DATABASE}"
-    image: mongo:4.4 # https://docs.atlas.mongodb.com/cluster-config/mongodb-version/
+      MONGO_INITDB_ROOT_USERNAME: "${MONGODB_ROOT_USERNAME:-admin}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGODB_ROOT_PASSWORD:-secret}"
+      MONGO_INITDB_DATABASE: "${MONGODB_ROOT_DATABASE:-admin}"
+    image: docker.io/mongo:4.4 # https://docs.atlas.mongodb.com/cluster-config/mongodb-version/, soon 5.0
     networks:
       - project
     ports:
-      - "${MONGODB_PORT}:${MONGODB_PORT}"
+      - "${MONGODB_PORT:-27017}:${MONGODB_PORT:-27017}"
     restart: unless-stopped
     volumes:
       - project_mongodb:/data/db

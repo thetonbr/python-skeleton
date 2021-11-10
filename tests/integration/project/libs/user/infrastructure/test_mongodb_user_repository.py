@@ -41,6 +41,9 @@ async def test_mongodb_user_repository(mongodb_disposable_connection: MongoDBCon
 
     await sut.save_and_publish(user)
 
+    users_ids = [user.id().value() for user in await sut.find_all()]
+    assert user_id.value() in users_ids
+
     user = await sut.find_email(user.email())
     assert user.id().value() == user_id.value()
 

@@ -10,9 +10,13 @@ endef
 help: ## this help
 	@awk 'BEGIN {FS = ":.*?## ";  printf "Usage:\n  make \033[36m<target> [LOCAL=0] [DEPLOY=0] \033[0m\n\nTargets:\n"} /^[a-zA-Z0-9_-]+:.*?## / {gsub("\\\\n",sprintf("\n%22c",""), $$2);printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
+.PHONY: shell
+shell:
+	docker-compose exec app sh
+
 .PHONY: build
 build: ## build container dependencies if LOCAL=0 else locally with tox
-	@if [ "$(ENV_FILE)" = .env ]; then $(DOCKER_COMPOSE) build --parallel; else tox; fi
+	@if [ "$(ENV_FILE)" = .env ]; then DOCKER_BUILDKIT=1 $(DOCKER_COMPOSE) build --pull; else command -v tox >/dev/null 2>&1 && tox || echo "Required 'tox' command installed"; fi
 
 .PHONY: deps
 deps: ## install dependencies with Docker Compose if LOCAL=0 else locally
@@ -24,7 +28,8 @@ fmt: ## format code with Docker Compose if LOCAL=0 else locally
 
 .PHONY: start
 start: ## start application with Docker Compose if LOCAL=0 else locally
-	@if [ "$(ENV_FILE)" = .env ]; then $(DOCKER_COMPOSE) up -d mongodb mailhog app; else sh pyscript.sh entrypoint api; fi
+	@if [ "$(ENV_FILE)" = .env ]; then $(DOCKER_COMPOSE) up -d mailhog mongodb; fi
+	@if [ "$(ENV_FILE)" = .env ]; then $(DOCKER_COMPOSE) up -d app; else sh pyscript.sh entrypoint api; fi
 
 .PHONY: stop
 stop: ## stop Docker Compose application if LOCAL=0
@@ -64,7 +69,7 @@ functional-tests: ## run functional tests with Docker Compose if LOCAL=0 else lo
 
 .PHONY: deploy
 deploy: ## push Docker Compose images to registry if DEPLOY=1
-	@if [ "$(DEPLOY?=0)" = 1 ]; then $(DOCKER_COMPOSE) push; fi
+	@if [ "$(DEPLOY)" = 1 ]; then $(DOCKER_COMPOSE) push; fi
 
 .PHONY: clean
 clean: ## clean Docker Compose containers and volumes if LOCAL=0

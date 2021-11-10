@@ -1,6 +1,6 @@
 from os import getenv
 from types import TracebackType
-from typing import Any, Dict, Optional, Type, final
+from typing import Any, Callable, Optional, Type, final
 
 from aioddd.testing import sanitize_objects
 from httpx import AsyncClient, Response
@@ -58,7 +58,7 @@ class APIContext:
         method: str,
         url: str,
         data: Optional[Any] = None,
-        params: Optional[Dict[str, Any]] = None,
+        params: Optional[dict[str, Any]] = None,
     ) -> None:
         self.response = await self.client.request(
             method=method,
@@ -83,3 +83,7 @@ class APIContext:
         expected = loads(data) if isinstance(data, str) else data
         actual = sanitize_objects(expected, actual)
         assert actual == expected, f'"Actual: {actual}, Expected: {expected}'
+
+    async def the_response_content_should(self, callback: Callable[[Any], bool] = None) -> None:
+        actual = self.response.json()
+        assert callback(actual), f'"Actual: {actual}'

@@ -46,7 +46,7 @@ class MongoDBBaseRepository(ABC):
     async def _find(
         self,
         collection: str,
-        criteria: Dict[str, Any],
+        criteria: Dict[str, Any] = {},
         limit: int = 0,
         **kwargs: Any,
     ) -> List[Union[Aggregate, Any]]:

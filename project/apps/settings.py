@@ -2,13 +2,11 @@
 from datetime import datetime
 from functools import lru_cache
 from logging import Logger
-from os.path import realpath
 from typing import Dict, Optional, Type, TypeVar, Union, cast
 
 from aioddd import (
     CommandBus,
     CommandHandler,
-    Container,
     EventBus,
     EventHandler,
     EventMapper,
@@ -23,6 +21,7 @@ from aioddd import (
     get_env,
     get_simple_logger,
 )
+from aiodi import Container
 
 from project.libs.shared.infrastructure.event_handlers.user.notify_user_registered_on_user_registered_event_handler import (
     NotifyUserRegisteredOnUserRegisteredEventHandler,
@@ -112,6 +111,7 @@ def env(key: Optional[str] = None, typ: Optional[Type[_T]] = None) -> _T:
     if not _ENV:
         _ENV = {
             'name': 'project',
+            'debug': bool(int(get_env(key='DEBUG', default='0'))),
             'environment': get_env(key='ENVIRONMENT', default='production'),
             'version': get_env(key='VERSION', default='latest'),
             'tz': get_env(key='TZ', default='UTC'),
@@ -120,8 +120,7 @@ def env(key: Optional[str] = None, typ: Optional[Type[_T]] = None) -> _T:
             'oauth_expiration_days': int(get_env(key='OAUTH_EXPIRATION_DAYS', default='14')),
             'http_host': get_env(key='HTTP_HOST', default='0.0.0.0'),
             'http_port': int(get_env(key='HTTP_PORT', default='8000')),
-            'mongodb_root_username': get_env(key='MONGODB_ROOT_USERNAME', default='admin'),
-            'mongodb_root_password': get_env(key='MONGODB_ROOT_PASSWORD', default='secret'),
+            'mongodb_protocol': get_env(key='MONGODB_PROTOCOL', default='mongodb'),
             'mongodb_root_database': get_env(key='MONGODB_ROOT_DATABASE', default='admin'),
             'mongodb_username': get_env(key='MONGODB_USERNAME', default='admin'),
             'mongodb_password': get_env(key='MONGODB_PASSWORD', default='secret'),
@@ -135,6 +134,8 @@ def env(key: Optional[str] = None, typ: Optional[Type[_T]] = None) -> _T:
             'email_use_tls': bool(int(get_env(key='EMAIL_USE_TLS', default='0'))),
             'email_from': get_env(key='EMAIL_FROM', default='local@project.com'),
             'email_ui_port': int(get_env(key='EMAIL_UI_PORT', default='8025')),
+            'openapi_url': get_env(key='OPENAPI_URL', default='/openapi.json'),
+            'openapi_prefix': get_env(key='OPENAPI_PREFIX', default=''),
         }
     if not key:
         return _ENV  # type: ignore
@@ -153,7 +154,6 @@ def container(reset: bool = False) -> Container:
     di = Container({'env': env(key=None, typ=dict)})
     di.resolve(
         [
-            ('static_path', f'{realpath(realpath(__file__) + "/../..")}/static'),
             (
                 Logger,
                 get_simple_logger,
@@ -169,12 +169,18 @@ def container(reset: bool = False) -> Container:
                 MongoDBConnection,
                 {
                     'uri_connection': di.resolve_parameter(
-                        lambda di_: 'mongodb://'
-                        f'{di_.get("env.mongodb_username", typ=str)}:'
-                        f'{di_.get("env.mongodb_password", typ=str)}@'
-                        f'{di_.get("env.mongodb_host", typ=str)}:'
-                        f'{di_.get("env.mongodb_port", typ=int)}/'
-                        f'{di_.get("env.mongodb_root_database", typ=str)}'
+                        lambda di_: "{}://{}:{}@{}{}/{}".format(
+                            di_.get("env.mongodb_protocol", typ=str),
+                            di_.get("env.mongodb_username", typ=str),
+                            di_.get("env.mongodb_password", typ=str),
+                            di_.get("env.mongodb_host", typ=str),
+                            (
+                                f':{di_.get("env.mongodb_port", typ=int)}'
+                                if di_.get("env.mongodb_protocol", typ=str) == "mongodb"
+                                else ''
+                            ),
+                            di_.get("env.mongodb_root_database", typ=str),
+                        )
                     ),
                     'database_name': di.resolve_parameter(lambda di_: di_.get('env.mongodb_database', typ=str)),
                 },
@@ -192,10 +198,7 @@ def container(reset: bool = False) -> Container:
                     'secret': di.resolve_parameter(lambda di_: di_.get('env.oauth_secret', typ=str)),
                 },
             ),
-            # Repositories/Notifiers #
-            # User
-            (AuthRepository, MongoDBAuthRepository),
-            (UserRepository, MongoDBUserRepository),
+            # Notifiers #
             (
                 UserNotifier,
                 EmailUserNotifier,
@@ -212,8 +215,10 @@ def container(reset: bool = False) -> Container:
                     ),
                 },
             ),
+            # Repositories #
+            (AuthRepository, MongoDBAuthRepository),
+            (UserRepository, MongoDBUserRepository),
             # Services #
-            # User
             (
                 TokenGeneratorService,
                 TokenGeneratorService,
@@ -222,6 +227,7 @@ def container(reset: bool = False) -> Container:
                     'token_type': 'Bearer',
                 },
             ),
+            # User
             AuthenticatorService,
             UserFinderService,
             UserFullFinderService,

@@ -31,7 +31,7 @@ class TestUserEventMappers:
         mapper = UserRegisteredEventMapper()
         msg = UserRegistered(UserRegistered.Attributes(UserIdMother.random(), UserEmailMother.random()))
         assert mapper.belongs_to(msg)
-        assert mapper.service_name == 'project.user'
+        assert mapper.service_name == 'project.account'
         assert mapper.event_name == 'users.registered'
         data = {
             'id': msg.attributes.id.value(),
@@ -47,7 +47,7 @@ class TestUserEventMappers:
         mapper = UserDeletedEventMapper()
         msg = UserDeleted(UserDeleted.Attributes(UserIdMother.random(), UserEmailMother.random()))
         assert mapper.belongs_to(msg)
-        assert mapper.service_name == 'project.user'
+        assert mapper.service_name == 'project.account'
         assert mapper.event_name == 'users.deleted'
         data = {
             'id': msg.attributes.id.value(),
@@ -63,7 +63,7 @@ class TestUserEventMappers:
         mapper = UserPasswordChangedEventMapper()
         msg = UserPasswordChanged(UserPasswordChanged.Attributes(UserIdMother.random(), UserEmailMother.random()))
         assert mapper.belongs_to(msg)
-        assert mapper.service_name == 'project.user'
+        assert mapper.service_name == 'project.account'
         assert mapper.event_name == 'users.password_changed'
         data = {
             'id': msg.attributes.id.value(),
@@ -86,7 +86,7 @@ class TestUserEventMappers:
             )
         )
         assert mapper.belongs_to(msg)
-        assert mapper.service_name == 'project.user'
+        assert mapper.service_name == 'project.account'
         assert mapper.event_name == 'users.password_forgotten'
         data = {
             'id': msg.attributes.id.value(),
@@ -113,7 +113,7 @@ class TestUserEventMappers:
             )
         )
         assert mapper.belongs_to(msg)
-        assert mapper.service_name == 'project.user'
+        assert mapper.service_name == 'project.account'
         assert mapper.event_name == 'users.password_resetted'
         data = {
             'id': msg.attributes.id.value(),
@@ -133,7 +133,7 @@ class TestUserEventMappers:
         mapper = UserRegisteredNotifiedEventMapper()
         msg = UserRegisteredNotified(UserRegisteredNotified.Attributes(UserIdMother.random(), UserEmailMother.random()))
         assert mapper.belongs_to(msg)
-        assert mapper.service_name == 'project.user'
+        assert mapper.service_name == 'project.account'
         assert mapper.event_name == 'users.user_registered_notified'
         data = {
             'id': msg.attributes.id.value(),

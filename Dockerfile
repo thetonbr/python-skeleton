@@ -1,15 +1,14 @@
-FROM python:3.9.1 as production
+FROM public.ecr.aws/lambda/python:3.9 as production
 
 WORKDIR /app
 
 ENV ENVIRONMENT=production
 
 COPY LICENSE pyproject.toml pyscript.sh README.md requirements.txt ./
+
+RUN yum upgrade -y && yum install -y gcc && python3 -m pip install --upgrade pip && sh pyscript.sh install
+
 COPY project ./project/
-
-HEALTHCHECK --interval=1s --timeout=10s CMD sh pyscript.sh healthcheck
-
-RUN python3 -m pip install --upgrade pip && sh pyscript.sh install
 
 USER python
 
@@ -18,14 +17,17 @@ CMD []
 
 FROM production as development
 
-ENV ENVIRONMENT=development
+HEALTHCHECK --interval=1s --timeout=10s CMD sh pyscript.sh healthcheck
 
 USER root
 
-COPY .pre-commit-config.yaml Makefile requirements-dev.txt ./
-COPY tests ./tests
+ENV ENVIRONMENT=development
 
-RUN sh pyscript.sh install
+COPY .pre-commit-config.yaml Makefile requirements-dev.txt ./
+
+RUN yum install -y net-tools procps && sh pyscript.sh install
+
+COPY tests ./tests
 
 ENTRYPOINT ["sh", "pyscript.sh", "entrypoint"]
 CMD []

@@ -1,6 +1,6 @@
-from aioddd import Container
+from aiodi import Container
 
-from apps.settings import container
+from project.apps.settings import container
 
 
 def get_current_container() -> Container:
